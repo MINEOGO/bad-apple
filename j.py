@@ -1,7 +1,7 @@
 import os
 import shutil
 
-FRAMES_DIR = "frames"      # where your 6500 pngs already are
+FRAMES_DIR = "frames_tmp"      # where your 6500 pngs already are
 CHUNKS_DIR = "chunks"
 
 TOTAL_FRAMES = 6500
