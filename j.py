@@ -1,32 +1,43 @@
 import os
-import shutil
+import json
+import subprocess
 
-FRAMES_DIR = "frames_tmp"      # where your 6500 pngs already are
+VIDEO = "【東方】Bad Apple!! ＰＶ【影絵】.mp4"
+
+FRAMES_DIR = "frames"
 CHUNKS_DIR = "chunks"
 
 TOTAL_FRAMES = 6500
 CHUNK_COUNT = 65
 FRAMES_PER_CHUNK = TOTAL_FRAMES // CHUNK_COUNT  # 100
 
+os.makedirs(FRAMES_DIR, exist_ok=True)
 os.makedirs(CHUNKS_DIR, exist_ok=True)
+
+print("extracting frames...")
+subprocess.run([
+    "ffmpeg",
+    "-i", VIDEO,
+    "-vf", "fps=30",
+    f"{FRAMES_DIR}/frame_%05d.png"
+], check=True)
 
 frames = sorted(
     f for f in os.listdir(FRAMES_DIR)
-    if f.lower().endswith(".png")
+    if f.endswith(".png")
 )[:TOTAL_FRAMES]
 
+print("creating json chunks...")
 for i in range(CHUNK_COUNT):
-    chunk_path = os.path.join(CHUNKS_DIR, f"chunk_{i+1:02d}")
-    os.makedirs(chunk_path, exist_ok=True)
-
     start = i * FRAMES_PER_CHUNK
     end = start + FRAMES_PER_CHUNK
 
-    for frame in frames[start:end]:
-        src = os.path.join(FRAMES_DIR, frame)
-        dst = os.path.join(chunk_path, frame)
-        shutil.copy2(src, dst)
+    chunk_frames = frames[start:end]
 
-    print(f"chunk {i+1:02d} done")
+    chunk_path = os.path.join(CHUNKS_DIR, f"chunk_{i+1:02d}.json")
+    with open(chunk_path, "w", encoding="utf-8") as f:
+        json.dump(chunk_frames, f)
 
-print("all pngs chunked. stfu and enjoy ❤️‍🩹🥀")
+    print(f"chunk_{i+1:02d}.json → {len(chunk_frames)} frames")
+
+print("done. sybau ❤️‍🩹🥀")
