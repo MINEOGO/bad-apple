@@ -1,21 +1,23 @@
-import os
-import json
+import os, json
 from PIL import Image
 
 FRAMES_DIR = "frames"
-OUT_DIR = "ascii01-chunks"
+OUT_DIR = "binary-chunks"
 
 FRAMES_PER_CHUNK = 100
 WIDTH = 120
-THRESHOLD = 128  # brightness cutoff
+THRESHOLD = 90   # LOWER = more filled shapes
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def img_to_ascii01(img):
-    # grayscale
+    # grayscale first
     img = img.convert("L")
 
-    # resize, keep aspect (terminal correction)
+    # threshold FIRST (important)
+    img = img.point(lambda p: 255 if p >= THRESHOLD else 0, mode="1")
+
+    # THEN resize (keeps fills)
     w, h = img.size
     aspect = h / w
     img = img.resize((WIDTH, int(WIDTH * aspect * 0.5)))
@@ -26,18 +28,14 @@ def img_to_ascii01(img):
     for y in range(img.height):
         row = []
         for x in range(img.width):
-            px = pixels[y * img.width + x]
-            row.append("1" if px >= THRESHOLD else "0")
+            row.append("1" if pixels[y * img.width + x] else "0")
         lines.append("".join(row))
 
     return "\n".join(lines)
 
-frames = sorted(
-    f for f in os.listdir(FRAMES_DIR)
-    if f.lower().endswith(".png")
-)
+frames = sorted(f for f in os.listdir(FRAMES_DIR) if f.endswith(".png"))
 
-chunk_idx = 1
+chunk_i = 1
 for i in range(0, len(frames), FRAMES_PER_CHUNK):
     chunk = []
 
@@ -48,11 +46,10 @@ for i in range(0, len(frames), FRAMES_PER_CHUNK):
                 "ascii": img_to_ascii01(im)
             })
 
-    out_path = os.path.join(OUT_DIR, f"chunk_{chunk_idx:02d}.json")
-    with open(out_path, "w", encoding="utf-8") as f:
+    with open(f"{OUT_DIR}/chunk_{chunk_i:02d}.json", "w") as f:
         json.dump(chunk, f)
 
-    print(f"saved {out_path}")
-    chunk_idx += 1
+    print(f"saved chunk_{chunk_i:02d}.json")
+    chunk_i += 1
 
-print("done")
+print("done. no more outline-only garbage 🫩")
