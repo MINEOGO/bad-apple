@@ -1,5 +1,6 @@
 import os
 import json
+import random
 from PIL import Image
 
 FRAMES_DIR = "frames"
@@ -7,16 +8,22 @@ OUT_DIR = "py-chunk"
 
 TOTAL_FRAMES = 6500
 FRAMES_PER_CHUNK = 100
-ASCII_WIDTH = 120   # lower if laggy
+ASCII_WIDTH = 120   # reduce if laggy
 
-WHITE_TOKEN = "if"  # visible python syntax
-BLACK_TOKEN = "  "  # space, same width
+BLACK_TOKEN = "  "
+
+TOKENS = [
+    "if", "==", "!=", "<=", ">=",
+    "()", "[]", "{}", "::",
+    "or", "and", "in",
+    "++", "--", "**",
+    "fn", "df", "rt"
+]
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
 def img_to_py_ascii(img, width=ASCII_WIDTH):
-    # force PURE black & white
-    img = img.convert("1")
+    img = img.convert("1")  # force pure black & white
 
     w, h = img.size
     aspect = h / w
@@ -26,10 +33,10 @@ def img_to_py_ascii(img, width=ASCII_WIDTH):
     out = ""
 
     for i, p in enumerate(pixels):
-        if p == 0:              # black
+        if p == 0:  # black
             out += BLACK_TOKEN
-        else:                   # white
-            out += WHITE_TOKEN
+        else:       # white
+            out += random.choice(TOKENS)
 
         if (i + 1) % img.width == 0:
             out += "\n"
@@ -43,8 +50,8 @@ frames = sorted(
 
 chunk_count = (len(frames) + FRAMES_PER_CHUNK - 1) // FRAMES_PER_CHUNK
 
-print(f"frames found: {len(frames)}")
-print(f"creating {chunk_count} chunks...")
+print(f"frames: {len(frames)}")
+print(f"chunks: {chunk_count}")
 
 for c in range(chunk_count):
     start = c * FRAMES_PER_CHUNK
@@ -68,4 +75,4 @@ for c in range(chunk_count):
 
     print(f"chunk_{c+1:02d}.json -> {len(chunk)} frames")
 
-print("DONE. this will actually look like Bad Apple now 🥀")
+print("DONE. random python chaos unlocked 🥀")
