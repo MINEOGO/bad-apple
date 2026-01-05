@@ -1,6 +1,5 @@
 import os
 import json
-import random
 from PIL import Image
 
 FRAMES_DIR = "frames"
@@ -8,29 +7,33 @@ OUT_DIR = "py-chunk"
 
 TOTAL_FRAMES = 6500
 FRAMES_PER_CHUNK = 100
+ASCII_WIDTH = 120   # lower if laggy
+
+WHITE_TOKEN = "if"  # visible python syntax
+BLACK_TOKEN = "  "  # space, same width
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
-PY_TOKENS = [
-    "if", "else", "elif", "for", "while", "def", "return",
-    "True", "False", "None", "and", "or", "not",
-    "==", "!=", "<=", ">=", "+=", "-=", "*=", "/=",
-    "{}", "[]", "()", ":", "::", "pass", "break", "continue"
-]
+def img_to_py_ascii(img, width=ASCII_WIDTH):
+    # force PURE black & white
+    img = img.convert("1")
 
-def img_to_py_ascii(img, width=80):
-    img = img.convert("L")
     w, h = img.size
     aspect = h / w
     img = img.resize((width, int(width * aspect * 0.5)))
 
     pixels = list(img.getdata())
     out = ""
+
     for i, p in enumerate(pixels):
-        token = PY_TOKENS[p % len(PY_TOKENS)]
-        out += token.ljust(4)[:4]  # fixed width
+        if p == 0:              # black
+            out += BLACK_TOKEN
+        else:                   # white
+            out += WHITE_TOKEN
+
         if (i + 1) % img.width == 0:
             out += "\n"
+
     return out
 
 frames = sorted(
@@ -39,6 +42,9 @@ frames = sorted(
 )[:TOTAL_FRAMES]
 
 chunk_count = (len(frames) + FRAMES_PER_CHUNK - 1) // FRAMES_PER_CHUNK
+
+print(f"frames found: {len(frames)}")
+print(f"creating {chunk_count} chunks...")
 
 for c in range(chunk_count):
     start = c * FRAMES_PER_CHUNK
@@ -62,4 +68,4 @@ for c in range(chunk_count):
 
     print(f"chunk_{c+1:02d}.json -> {len(chunk)} frames")
 
-print("done. python brainrot video unlocked 🥀")
+print("DONE. this will actually look like Bad Apple now 🥀")
